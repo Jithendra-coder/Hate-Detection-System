@@ -1,0 +1,26 @@
+{
+  "dataset_info": {
+    "total_samples": 24660,
+    "training_samples": 19728,
+    "test_samples": 4932,
+    "text_column": "tweet",
+    "original_label_column": "class"
+  },
+  "model_info": {
+    "vocab_size": 20273,
+    "max_length": 100,
+    "total_params": 2736897,
+    "architecture": "LSTM"
+  },
+  "performance": {
+    "test_accuracy": 0.9426196217536926,
+    "test_precision": 0.0,
+    "test_recall": 0.0,
+    "f1_score": 0.0
+  },
+  "label_conversion": {
+    "original_class_0": "hate_speech -> HATE (1)",
+    "original_class_1": "offensive_language -> NOT_HATE (0)",
+    "original_class_2": "neither -> NOT_HATE (0)"
+  }
+}

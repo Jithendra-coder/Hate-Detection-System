@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hate Speech Detector</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    /* Progress Bar Styles */
+    #scan-progress-bar {
+      margin: 16px 0;
+      height: 10px;
+      background-color: #e2e8f0;
+      border-radius: 5px;
+      overflow: hidden;
+      width: 100%;
+    }
+
+    #scan-progress-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #2563eb, #1d4ed8);
+      transition: width 0.3s ease;
+    }
+
+    /* Error message hidden initially */
+    #scan-error-message {
+      display: none;
+      color: #ef4444;
+      font-weight: 600;
+      margin: 10px 0;
+      text-align: center;
+    }
+
+    /* Optional basic layout styles */
+    .popup-body {
+      font-family: Arial, sans-serif;
+      background-color: #f9fafb;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .popup-container {
+      max-width: 400px;
+      margin: 0 auto;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .popup-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .header-title {
+      font-size: 1.5em;
+      color: #111827;
+      margin: 0;
+    }
+
+    .status-section {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .status-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .status-label {
+      font-size: 0.9em;
+      color: #6b7280;
+    }
+
+    .status-value {
+      font-size: 1em;
+      font-weight: bold;
+      color: #1f2937;
+    }
+  </style>
+</head>
+<body class="popup-body">
+  <div class="popup-container">
+    <!-- Header -->
+    <div class="popup-header">
+      <h1 class="header-title">Hate Speech Detector</h1>
+    </div>
+
+    <!-- Status Section -->
+    <div class="status-section">
+      <div class="status-item">
+        <span class="status-label">Current Page:</span>
+        <span id="current-status" class="status-value">Scanning...</span>
+      </div>
+      <!-- Detections item removed -->
+    </div>
+
+    <!-- Scanning Progress Bar -->
+    <div id="scan-progress-bar">
+      <div id="scan-progress-fill"></div>
+    </div>
+
+    <!-- Error Message -->
+    <div id="scan-error-message">An error occurred during scanning.</div>
+  </div>
+</body>
+</html>
