@@ -8,12 +8,13 @@ import numpy as np
 import tensorflow as tf
 from flask import Flask, request, jsonify, send_file, render_template
 from flask_cors import CORS
+from config import Config
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-this')
+app.config['SECRET_KEY'] = Config.SECRET_KEY
 
 CORS(app, origins=["chrome-extension://*", "moz-extension://*", "http://localhost:*", "https://localhost:*"])
 
@@ -23,11 +24,11 @@ label_encoder = None
 
 class HateSpeechDetector:
     def __init__(self):
-        self.model_path = os.path.join('backend', 'models', 'best_model.keras')
-        self.tokenizer_path = 'tokenizer.pkl'
-        self.labels_path = 'labels.pkl'
-        self.max_length = 100
-        self.confidence_threshold = 0.5
+        self.model_path = Config.MODEL_PATH
+        self.tokenizer_path = Config.TOKENIZER_PATH
+        self.labels_path = Config.LABELS_PATH
+        self.max_length = Config.MAX_SEQUENCE_LENGTH
+        self.confidence_threshold = Config.CONFIDENCE_THRESHOLD
         self.model = None
         self.tokenizer = None
         self.label_encoder = None
@@ -36,13 +37,13 @@ class HateSpeechDetector:
     def load_model_components(self):
         try:
             if not os.path.exists(self.model_path):
-                logger.error("Model file not found: " + self.model_path)
+                logger.error("Model file not found: %s", self.model_path)
                 return False
             if not os.path.exists(self.tokenizer_path):
-                logger.error("Tokenizer file not found: " + self.tokenizer_path)
+                logger.error("Tokenizer file not found: %s", self.tokenizer_path)
                 return False
             if not os.path.exists(self.labels_path):
-                logger.error("Labels file not found: " + self.labels_path)
+                logger.error("Labels file not found: %s", self.labels_path)
                 return False
             logger.info("Loading LSTM model...")
             self.model = tf.keras.models.load_model(self.model_path)
@@ -78,8 +79,6 @@ class HateSpeechDetector:
                 return {'prediction': 0, 'confidence': 0.0, 'label': 'error', 'error': 'Model not loaded ― cannot scan this page'}
             if len(text) > 1000:
                 return {'prediction': 0, 'confidence': 0.0, 'label': 'error', 'error': 'Text too long (max 1000 characters)'}
-            if len(text) > 1000:
-                text = text[:1000]
             processed_text = self.preprocess_text(text)
             predictions = self.model.predict(processed_text, verbose=0)
             prediction_prob = float(predictions[0][0])
@@ -231,13 +230,10 @@ def get_model_info():
 
 @app.route('/download', methods=['GET'])
 def download_model_file():
-    model_path = os.path.join('backend', 'models', 'best_model.keras')
-    abs_model_path = os.path.abspath(model_path)
-    print("Download model absolute path:", abs_model_path)
-    if os.path.exists(abs_model_path):
-        return send_file(abs_model_path, as_attachment=True)
+    if os.path.exists(detector.model_path):
+        return send_file(detector.model_path, as_attachment=True)
     else:
-        logger.error("Model file not found: " + abs_model_path)
+        logger.error("Model file not found: " + detector.model_path)
         return jsonify({'error': 'Model file not found'}), 404
 
 @app.route('/download_page', methods=['GET'])

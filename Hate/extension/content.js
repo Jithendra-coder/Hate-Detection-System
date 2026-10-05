@@ -2,6 +2,7 @@
 class HateSpeechDetector {
   constructor() {
     this.isEnabled = true;
+    this.autoScan = false;
     this.apiEndpoint = 'http://localhost:8000/predict'; // Your backend API
     this.highlightClass = 'hate-speech-highlight';
     this.processedElements = new WeakSet();
@@ -11,12 +12,13 @@ class HateSpeechDetector {
 
   async init() {
     // Load user settings
-    const settings = await chrome.storage.sync.get(['isEnabled', 'sensitivity', 'highlightColor']);
+    const settings = await chrome.storage.sync.get(['isEnabled', 'autoScan', 'sensitivity', 'highlightColor']);
     this.isEnabled = settings.isEnabled !== false;
+    this.autoScan = settings.autoScan === true;
     this.sensitivity = settings.sensitivity || 0.7;
     this.highlightColor = settings.highlightColor || '#ff6b6b';
 
-    if (this.isEnabled) {
+    if (this.isEnabled && this.autoScan) {
       this.scanPage();
       this.observeChanges();
     }
@@ -24,6 +26,7 @@ class HateSpeechDetector {
 
   // Main function to scan the entire page
   async scanPage() {
+    if (!this.isEnabled) return;
     const textNodes = this.getTextNodes(document.body);
 
     for (const node of textNodes) {
@@ -274,7 +277,8 @@ class HateSpeechDetector {
 
   // Observe DOM changes for dynamic content
   observeChanges() {
-    const observer = new MutationObserver((mutations) => {
+    if (this.observer) return;
+    this.observer = new MutationObserver((mutations) => {
       let hasTextChanges = false;
 
       mutations.forEach((mutation) => {
@@ -297,7 +301,7 @@ class HateSpeechDetector {
       }
     });
 
-    observer.observe(document.body, {
+    this.observer.observe(document.body, {
       childList: true,
       subtree: true,
       characterData: false
@@ -308,9 +312,14 @@ class HateSpeechDetector {
   toggle(enabled) {
     this.isEnabled = enabled;
 
-    if (enabled) {
+    if (enabled && this.autoScan) {
       this.scanPage();
+      this.observeChanges();
     } else {
+      if (!enabled && this.observer) {
+        this.observer.disconnect();
+        this.observer = null;
+      }
       // Remove all highlights
       const highlights = document.querySelectorAll(`.${this.highlightClass}`);
       highlights.forEach(highlight => {
@@ -346,6 +355,27 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.action === 'scan') {
     if (detector) {
       detector.scanPage();
+    }
+    sendResponse({ success: true });
+  } else if (request.action === 'settingsUpdated') {
+    if (detector && request.settings) {
+      const wasAutoScanning = detector.autoScan;
+      detector.autoScan = request.settings.autoScan ?? detector.autoScan;
+      detector.sensitivity = request.settings.sensitivity ?? detector.sensitivity;
+      detector.highlightColor = request.settings.highlightColor ?? detector.highlightColor;
+      if (request.settings.isEnabled !== undefined) detector.toggle(request.settings.isEnabled);
+      if (
+        request.settings.isEnabled === undefined &&
+        detector.isEnabled &&
+        !wasAutoScanning &&
+        detector.autoScan
+      ) {
+        detector.scanPage();
+        detector.observeChanges();
+      } else if (!detector.autoScan && detector.observer) {
+        detector.observer.disconnect();
+        detector.observer = null;
+      }
     }
     sendResponse({ success: true });
   } else if (request.action === 'getStats') {

@@ -21,12 +21,6 @@ class HateSpeechBackground {
       this.toggleExtension(tab);
     });
 
-    // Monitor tab updates to scan new pages
-    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-      if (changeInfo.status === 'complete' && tab.url && !tab.url.startsWith('chrome://')) {
-        this.scanNewPage(tab);
-      }
-    });
   }
 
   // Handle extension installation and updates
@@ -38,12 +32,18 @@ class HateSpeechBackground {
       isEnabled: true,
       sensitivity: 0.7,
       highlightColor: '#ff6b6b',
-      autoScan: true,
+      autoScan: false,
       showNotifications: true
     };
 
-    // Initialize storage with defaults
-    await chrome.storage.sync.set(defaultSettings);
+    // Add defaults without overwriting settings the user already chose.
+    const savedSettings = await chrome.storage.sync.get();
+    const missingSettings = Object.fromEntries(
+      Object.entries(defaultSettings).filter(([key]) => !(key in savedSettings))
+    );
+    if (Object.keys(missingSettings).length > 0) {
+      await chrome.storage.sync.set(missingSettings);
+    }
 
     // Show welcome page on first install
     if (details.reason === 'install') {
@@ -145,26 +145,6 @@ class HateSpeechBackground {
       });
     } catch (error) {
       console.error('Failed to toggle extension:', error);
-    }
-  }
-
-  // Scan new pages automatically
-  async scanNewPage(tab) {
-    try {
-      const settings = await chrome.storage.sync.get(['isEnabled', 'autoScan']);
-      if (settings.isEnabled && settings.autoScan) {
-        // Wait for page to fully load
-        setTimeout(async () => {
-          try {
-            await chrome.tabs.sendMessage(tab.id, { action: 'scan' });
-          } catch (error) {
-            // Content script might not be loaded yet
-            console.log('Content script not ready for tab:', tab.id);
-          }
-        }, 2000);
-      }
-    } catch (error) {
-      console.error('Failed to scan new page:', error);
     }
   }
 
