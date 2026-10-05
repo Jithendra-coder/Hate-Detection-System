@@ -165,15 +165,20 @@ def check_rate_limit(endpoint):
     print("Rate limiting test completed.")
 
 def main():
+    global DEFAULT_API_URL, API_ENDPOINT, HEALTH_ENDPOINT, MODEL_INFO_ENDPOINT, STATS_ENDPOINT, FEEDBACK_ENDPOINT
+
     parser = argparse.ArgumentParser(description="Advanced API Testing for Hate Speech Detection")
     parser.add_argument('--quick', action='store_true', help='Run quick tests')
     parser.add_argument('--full', action='store_true', help='Run full comprehensive tests')
     parser.add_argument('url', nargs='?', default=DEFAULT_API_URL, help='API URL (default: localhost)')
     args = parser.parse_args()
 
-    global DEFAULT_API_URL, API_ENDPOINT
     DEFAULT_API_URL = args.url.rstrip('/')
     API_ENDPOINT = f'{DEFAULT_API_URL}/predict'
+    HEALTH_ENDPOINT = f'{DEFAULT_API_URL}/'
+    MODEL_INFO_ENDPOINT = f'{DEFAULT_API_URL}/model_info'
+    STATS_ENDPOINT = f'{DEFAULT_API_URL}/stats'
+    FEEDBACK_ENDPOINT = f'{DEFAULT_API_URL}/feedback'
 
     if args.quick:
         run_quick_tests()

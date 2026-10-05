@@ -1,0 +1,25 @@
+name: Quality checks
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check Python paths and syntax
+        run: |
+          python Hate/backend/tests/test_config_paths.py
+          python -m compileall -q Hate/backend Hate/training
+      - name: Check extension settings behavior
+        run: node --test Hate/extension/tests/background-settings.test.cjs

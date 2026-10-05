@@ -2,11 +2,17 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 import os
+import argparse
+from pathlib import Path
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.utils import pad_sequences
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
 import pickle, re, json, matplotlib.pyplot as plt, seaborn as sns
+
+HATE_DIR = Path(__file__).resolve().parents[1]
+MODEL_DIR = HATE_DIR / 'backend' / 'models'
+MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def preprocess_text(text):
@@ -114,7 +120,7 @@ def train_model(csv_path, text_col='tweet', label_col='class', enable_stim=True)
     callbacks = [
         tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=4, restore_best_weights=True),
         tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, verbose=1),
-        tf.keras.callbacks.ModelCheckpoint('best_model.keras', save_best_only=True, monitor='val_accuracy')
+        tf.keras.callbacks.ModelCheckpoint(str(MODEL_DIR / 'best_model.keras'), save_best_only=True, monitor='val_accuracy')
     ]
     history = model.fit(
         X_train, y_train, validation_data=(X_test, y_test),
@@ -127,8 +133,9 @@ def train_model(csv_path, text_col='tweet', label_col='class', enable_stim=True)
     preds = (model.predict(X_test) > 0.5).astype(int)
     print("\nClassification Report:\n", classification_report(y_test, preds, target_names=['NOT_HATE','HATE']))
     plot_confusion(y_test, preds)
-    model.save('hate_lstm_model.keras')
-    with open('tokenizer.pkl','wb') as f: pickle.dump(tokenizer,f)
+    model.save(str(MODEL_DIR / 'hate_lstm_model.keras'))
+    with open(HATE_DIR / 'tokenizer.pkl','wb') as f: pickle.dump(tokenizer,f)
+    with open(HATE_DIR / 'labels.pkl','wb') as f: pickle.dump({'NOT_HATE': 0, 'HATE': 1}, f)
     print("💾 Saved model & tokenizer.")
     return model
 
@@ -136,8 +143,8 @@ def train_model(csv_path, text_col='tweet', label_col='class', enable_stim=True)
 def test_hate_model():
     print("\n🧪 Running model test...")
     try:
-        model = tf.keras.models.load_model('hate_lstm_model.keras')
-        with open('tokenizer.pkl', 'rb') as f:
+        model = tf.keras.models.load_model(str(MODEL_DIR / 'hate_lstm_model.keras'))
+        with open(HATE_DIR / 'tokenizer.pkl', 'rb') as f:
             tokenizer = pickle.load(f)
     except Exception as e:
         print(f"❌ Could not load model: {e}"); return
@@ -160,9 +167,12 @@ def test_hate_model():
 
 
 if __name__ == "__main__":
-    dataset_path = r"C:\Users\JITHU\OneDrive\Desktop\final_project\training\hate_speech_dataset.csv"
-    if os.path.exists(dataset_path):
-        model = train_model(dataset_path, enable_stim=True)
-        test_hate_model()
+    parser = argparse.ArgumentParser(description="Train the hate speech detector.")
+    parser.add_argument("--dataset", type=Path, default=Path(__file__).with_name("hate_speech_dataset.csv"))
+    args = parser.parse_args()
+    if args.dataset.is_file():
+        model = train_model(str(args.dataset), enable_stim=True)
+        if model:
+            test_hate_model()
     else:
-        print("Dataset missing. Update dataset_path variable.")
+        parser.error(f"Dataset not found: {args.dataset}. Pass --dataset to select a CSV.")

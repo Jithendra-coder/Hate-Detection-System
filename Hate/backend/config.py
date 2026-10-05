@@ -2,7 +2,11 @@
 Configuration management for Hate Speech Detection API
 """
 import os
+from pathlib import Path
 from typing import Dict, Any
+
+
+HATE_DIR = Path(__file__).resolve().parents[1]
 
 
 class Config:
@@ -14,9 +18,9 @@ class Config:
     TESTING = False
 
     # Model settings
-    MODEL_PATH = os.environ.get('MODEL_PATH', 'lstm_hate_model.h5')
-    TOKENIZER_PATH = os.environ.get('TOKENIZER_PATH', 'tokenizer.pkl')
-    LABELS_PATH = os.environ.get('LABELS_PATH', 'labels.pkl')
+    MODEL_PATH = os.environ.get('MODEL_PATH', str(HATE_DIR / 'backend' / 'models' / 'best_model.keras'))
+    TOKENIZER_PATH = os.environ.get('TOKENIZER_PATH', str(HATE_DIR / 'tokenizer.pkl'))
+    LABELS_PATH = os.environ.get('LABELS_PATH', str(HATE_DIR / 'labels.pkl'))
     MAX_SEQUENCE_LENGTH = int(os.environ.get('MAX_SEQUENCE_LENGTH', '100'))
     CONFIDENCE_THRESHOLD = float(os.environ.get('CONFIDENCE_THRESHOLD', '0.5'))
 
