@@ -45,7 +45,7 @@ def apply_stimulation_mode(df, text_column='tweet', enable=False):
     for word in stimulation_words:
         for template in templates:
             text = template.format(word=word)
-            stim_data.append({"tweet": text, "class": 1})  # Set class to 1 (hate)
+            stim_data.append({"tweet": text, "class": 0})  # Dataset class 0 is hate speech.
     df_stim = pd.DataFrame(stim_data)
     df = pd.concat([df, df_stim], ignore_index=True)
     print(f" Added {len(df_stim)} synthetic hate samples")
@@ -53,7 +53,7 @@ def apply_stimulation_mode(df, text_column='tweet', enable=False):
 
 
 def prepare_labels(df, label_column='class'):
-    df['binary_label'] = df[label_column].apply(lambda x: 1 if x == 1 else 0)
+    df['binary_label'] = df[label_column].apply(lambda x: 1 if x == 0 else 0)
     print(df['binary_label'].value_counts())
     return df
 
