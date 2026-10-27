@@ -184,15 +184,19 @@ class HateSpeechDetector {
     popup.innerHTML = `
       <div class="hate-speech-popup-content">
         <h3>Hate Speech Detected</h3>
-        <p><strong>Text:</strong> "${text.substring(0, 100)}${text.length > 100 ? '...' : ''}"</p>
-        <p><strong>Confidence:</strong> ${Math.round(prediction.confidence * 100)}%</p>
-        <p><strong>Category:</strong> ${prediction.category}</p>
+        <p><strong>Text:</strong> <span id="hate-popup-text"></span></p>
+        <p><strong>Confidence:</strong> <span id="hate-popup-confidence"></span></p>
+        <p><strong>Category:</strong> <span id="hate-popup-category"></span></p>
         <div class="popup-actions">
           <button id="report-false-positive">Report False Positive</button>
           <button id="close-popup">Close</button>
         </div>
       </div>
     `;
+    const displayedText = text.substring(0, 100) + (text.length > 100 ? '...' : '');
+    popup.querySelector('#hate-popup-text').textContent = `"${displayedText}"`;
+    popup.querySelector('#hate-popup-confidence').textContent = `${Math.round(prediction.confidence * 100)}%`;
+    popup.querySelector('#hate-popup-category').textContent = prediction.category;
 
     // Position popup near the clicked element
     const rect = element.getBoundingClientRect();

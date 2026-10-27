@@ -22,4 +22,4 @@ jobs:
           python Hate/backend/tests/test_config_paths.py
           python -m compileall -q Hate/backend Hate/training
       - name: Check extension settings behavior
-        run: node --test Hate/extension/tests/background-settings.test.cjs
+        run: node --test Hate/extension/tests/*.test.cjs
